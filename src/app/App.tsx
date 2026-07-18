@@ -2914,7 +2914,7 @@ export default function App() {
   const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")}`;
 
   return (
-    <div className={isMobile ? "w-full h-screen overflow-hidden" : "min-h-screen flex items-center justify-center p-4"} style={{ background: isMobile ? (isDark ? "#111111" : "#FAF8F4") : "#D9D4CB" }}>
+    <div className={isMobile ? "w-full h-[100dvh] overflow-hidden" : "min-h-screen flex items-center justify-center p-4"} style={{ background: isMobile ? (isDark ? "#111111" : "#FAF8F4") : "#D9D4CB" }}>
       {/* Phone frame */}
       <div className="relative flex-shrink-0" style={
         isMobile
