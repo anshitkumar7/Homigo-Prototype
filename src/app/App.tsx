@@ -2961,7 +2961,7 @@ export default function App() {
             : (showBottomNav ? 83 : 0),
           background: isDark ? "#111111" : "#FAF8F4"
         }}>
-          <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, ease: "easeOut" }} className="min-h-full flex flex-col">
+          <motion.div key={currentScreen} initial={{ opacity: 0, x: 12, scale: 0.98 }} animate={{ opacity: 1, x: 0, scale: 1 }} transition={{ type: "spring", stiffness: 320, damping: 26 }} className="min-h-full flex flex-col overflow-x-hidden">
             <CurrentScreen ctx={ctx} />
           </motion.div>
         </div>
