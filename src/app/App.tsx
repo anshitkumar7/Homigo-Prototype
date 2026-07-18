@@ -30,11 +30,11 @@ interface Worker {
   image: string; bio: string; skills: string[]; price: number;
 }
 interface Address { id: string; label: string; line1: string; line2: string; city: string; pincode: string; isDefault: boolean; }
-interface PayMethod { id: string; type: "upi"|"card"|"wallet"|"netbanking"; label: string; detail: string; isDefault: boolean; }
-interface Booking { id: string; serviceId: string; workerId: string; status: "upcoming"|"ongoing"|"completed"|"cancelled"; date: string; time: string; address: string; total: number; packageName: string; }
+interface PayMethod { id: string; type: "upi" | "card" | "wallet" | "netbanking"; label: string; detail: string; isDefault: boolean; }
+interface Booking { id: string; serviceId: string; workerId: string; status: "upcoming" | "ongoing" | "completed" | "cancelled"; date: string; time: string; address: string; total: number; packageName: string; }
 interface CartItem { serviceId: string; packageId: string; }
-interface ChatMsg { id: string; sender: "user"|"worker"; text: string; time: string; }
-interface Notif { id: string; type: "booking"|"offer"|"reminder"|"update"; title: string; body: string; time: string; read: boolean; }
+interface ChatMsg { id: string; sender: "user" | "worker"; text: string; time: string; }
+interface Notif { id: string; type: "booking" | "offer" | "reminder" | "update"; title: string; body: string; time: string; read: boolean; }
 interface UserProfile { name: string; email: string; phone: string; }
 interface AppCtx {
   screen: string;
@@ -72,8 +72,8 @@ interface AppCtx {
   setPayMethods: React.Dispatch<React.SetStateAction<PayMethod[]>>;
   chatMsgs: ChatMsg[];
   setChatMsgs: React.Dispatch<React.SetStateAction<ChatMsg[]>>;
-  aiTab: "text"|"photo"|"video";
-  setAiTab: (t: "text"|"photo"|"video") => void;
+  aiTab: "text" | "photo" | "video";
+  setAiTab: (t: "text" | "photo" | "video") => void;
   galleryIdx: number;
   setGalleryIdx: (i: number) => void;
   sortOption: string;
@@ -91,6 +91,7 @@ interface AppCtx {
   setAiQuery: (q: string) => void;
   filterState: { rating: number; verified: boolean; priceMax: number };
   setFilterState: React.Dispatch<React.SetStateAction<{ rating: number; verified: boolean; priceMax: number }>>;
+  isMobile: boolean;
 }
 
 // ─── Data ────────────────────────────────────────────────────────────────
@@ -320,7 +321,7 @@ const getSvcsByCategory = (cid: string) => SERVICES.filter(s => s.categoryId ===
 function StarRow({ rating, size = 12 }: { rating: number; size?: number }) {
   return (
     <div className="flex gap-0.5">
-      {[1,2,3,4,5].map(i => (
+      {[1, 2, 3, 4, 5].map(i => (
         <Star key={i} size={size} className={i <= Math.round(rating) ? "text-amber-400 fill-amber-400" : "text-[#E8E8E8] fill-[#E8E8E8]"} />
       ))}
     </div>
@@ -430,12 +431,12 @@ function BackHeader({ title, onBack, right }: { title?: string; onBack: () => vo
   );
 }
 
-function BottomNav({ screen, navigate, requireAuth }: { screen: string; navigate: (s: string) => void; requireAuth: (cb: () => void) => void }) {
+function BottomNav({ screen, navigate, requireAuth, isMobile }: { screen: string; navigate: (s: string) => void; requireAuth: (cb: () => void) => void; isMobile?: boolean }) {
   const active = ["home"].includes(screen) ? "home"
     : ["categories", "all-categories"].includes(screen) ? "categories"
-    : ["booking-history", "booking-detail"].includes(screen) ? "bookings"
-    : ["profile", "edit-profile", "saved-addresses", "payment-methods", "settings"].includes(screen) ? "profile"
-    : "";
+      : ["booking-history", "booking-detail"].includes(screen) ? "bookings"
+        : ["profile", "edit-profile", "saved-addresses", "payment-methods", "settings"].includes(screen) ? "profile"
+          : "";
   const tabs = [
     { id: "home", Icon: Home, label: "Home", to: "home" },
     { id: "categories", Icon: LayoutGrid, label: "Explore", to: "categories" },
@@ -443,19 +444,21 @@ function BottomNav({ screen, navigate, requireAuth }: { screen: string; navigate
     { id: "profile", Icon: User, label: "Profile", to: "profile", auth: true },
   ];
   return (
-    <div className="bg-white border-t border-[#E8E8E8]">
+    <div className="bg-white border-t border-[#E8E8E8]" style={{ paddingBottom: isMobile ? "calc(8px + env(safe-area-inset-bottom, 0px))" : 0 }}>
       <div className="flex items-center justify-around px-2 pt-2.5 pb-1">
         {tabs.map(({ id, Icon, label, to, auth }) => (
           <button key={id} onClick={() => auth ? requireAuth(() => navigate(to)) : navigate(to)}
             className="flex flex-col items-center gap-0.5 px-4">
-            <Icon size={22} className={active === id ? "text-[#111111]" : "text-[#CCCCCC]"} strokeWidth={active === id ? 2.2 : 1.5} />
-            <span className={`text-[10px] font-semibold ${active === id ? "text-[#111111]" : "text-[#CCCCCC]"}`}>{label}</span>
+            <Icon size={22} className={active === id ? "text-[#111111]" : "text-[#888888]"} strokeWidth={active === id ? 2.2 : 1.8} />
+            <span className={`text-[10px] font-semibold ${active === id ? "text-[#111111]" : "text-[#888888]"}`}>{label}</span>
           </button>
         ))}
       </div>
-      <div className="flex justify-center pb-2 pt-1">
-        <div className="w-[120px] h-[4px] bg-black/10 rounded-full" />
-      </div>
+      {!isMobile && (
+        <div className="flex justify-center pb-2 pt-1">
+          <div className="w-[120px] h-[4px] bg-black/10 rounded-full" />
+        </div>
+      )}
     </div>
   );
 }
@@ -463,23 +466,72 @@ function BottomNav({ screen, navigate, requireAuth }: { screen: string; navigate
 // ─── SPLASH ──────────────────────────────────────────────────────────────
 function SplashScreen({ ctx }: { ctx: AppCtx }) {
   useEffect(() => {
-    const t = setTimeout(() => ctx.navigate("onboarding"), 2400);
+    const t = setTimeout(() => ctx.navigate("home"), 2500);
     return () => clearTimeout(t);
   }, []);
   return (
-    <div className="flex flex-col items-center justify-center min-h-[780px] bg-[#111111]">
-      <motion.div initial={{ opacity: 0, scale: 0.75 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.65, ease: "easeOut" }} className="flex flex-col items-center gap-5">
-        <div className="w-[84px] h-[84px] bg-white rounded-[28px] flex items-center justify-center shadow-2xl">
-          <Home size={38} className="text-[#111111]" strokeWidth={1.5} />
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111]">
+      <div className="flex flex-col items-center gap-7 relative">
+        {/* Ripple Wave Effect */}
+        <div className="relative flex items-center justify-center">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1.7, opacity: [0, 0.4, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+            className="absolute w-[88px] h-[88px] rounded-[28px] border border-white/20 pointer-events-none"
+          />
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 2.3, opacity: [0, 0.2, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut", delay: 0.6 }}
+            className="absolute w-[88px] h-[88px] rounded-[28px] border border-white/10 pointer-events-none"
+          />
+
+          {/* Animated White logo box */}
+          <motion.div 
+            initial={{ scale: 0, opacity: 0, rotate: -25 }}
+            animate={{ scale: [0, 1.15, 1], opacity: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 110, damping: 14, delay: 0.1 }}
+            className="relative z-10 w-[88px] h-[88px] bg-white rounded-[28px] flex items-center justify-center shadow-[0_20px_50px_rgba(255,255,255,0.06)]"
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 140, damping: 10, delay: 0.45 }}
+            >
+              <Home size={40} className="text-[#111111]" strokeWidth={1.5} />
+            </motion.div>
+          </motion.div>
         </div>
-        <div className="text-center">
-          <h1 className="text-[34px] font-bold text-white tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>homigo</h1>
-          <p className="text-[13px] text-white/40 mt-1 tracking-widest uppercase">Home Services</p>
-        </div>
-      </motion.div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.5 }} className="absolute bottom-16 flex gap-1.5">
+
+        {/* Animated Title & Tagline */}
+        <motion.div 
+          initial={{ y: 24, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 70, damping: 14, delay: 0.5 }}
+          className="text-center"
+        >
+          <h1 className="text-[38px] font-bold text-white tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>homigo</h1>
+          <motion.p 
+            initial={{ opacity: 0, letterSpacing: "0.1em" }}
+            animate={{ opacity: 1, letterSpacing: "0.2em" }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="text-[13px] text-white/40 mt-1 uppercase"
+          >
+            Home Services
+          </motion.p>
+        </motion.div>
+      </div>
+
+      {/* Loading indicator bouncing dots */}
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        transition={{ delay: 1.2, duration: 0.4 }} 
+        className="absolute bottom-16 flex gap-2"
+      >
         {[0, 1, 2].map(i => (
-          <div key={i} className="w-1.5 h-1.5 bg-white/25 rounded-full animate-bounce" style={{ animationDelay: `${i * 120}ms` }} />
+          <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
         ))}
       </motion.div>
     </div>
@@ -497,7 +549,7 @@ function OnboardingScreen({ ctx }: { ctx: AppCtx }) {
   const [step, setStep] = useState(0);
   const s = OB_STEPS[step];
   return (
-    <div className="flex flex-col min-h-[780px] bg-[#FAF8F4]">
+    <div className="flex flex-col min-h-full bg-[#FAF8F4]">
       <div className="relative h-[370px] overflow-hidden">
         <motion.img key={step} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} src={s.image} alt="" className="w-full h-full object-cover bg-[#E8E4DC]" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 60%, #FAF8F4 100%)" }} />
@@ -529,7 +581,7 @@ function OnboardingScreen({ ctx }: { ctx: AppCtx }) {
 // ─── LOGIN ───────────────────────────────────────────────────────────────
 function LoginScreen({ ctx }: { ctx: AppCtx }) {
   const [phone, setPhone] = useState("");
-  const [stage, setStage] = useState<"phone"|"otp">("phone");
+  const [stage, setStage] = useState<"phone" | "otp">("phone");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const doLogin = () => {
@@ -544,7 +596,7 @@ function LoginScreen({ ctx }: { ctx: AppCtx }) {
     setTimeout(() => { setLoading(false); setStage("otp"); }, 1000);
   };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] flex flex-col">
+    <div className="min-h-full bg-[#FAF8F4] flex flex-col">
       <BackHeader onBack={ctx.goBack} />
       <div className="flex-1 px-6 pt-4 pb-10">
         <div className="w-14 h-14 bg-[#111111] rounded-2xl flex items-center justify-center mb-6">
@@ -577,7 +629,7 @@ function LoginScreen({ ctx }: { ctx: AppCtx }) {
         ) : (
           <>
             <div className="flex gap-3 mb-6">
-              {[0,1,2,3,4,5].map(i => (
+              {[0, 1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="flex-1 h-[52px] bg-white border border-[#E8E8E8] rounded-xl flex items-center justify-center text-[22px] font-bold text-[#111111]">
                   {otp[i] || ""}
                 </div>
@@ -585,8 +637,8 @@ function LoginScreen({ ctx }: { ctx: AppCtx }) {
             </div>
             <input value={otp} onChange={e => setOtp(e.target.value)} type="tel" maxLength={6} className="sr-only" autoFocus />
             <div className="flex gap-2 mb-6">
-              {["1","2","3","4","5","6","7","8","9","","0","⌫"].map((k, i) => (
-                <button key={i} onClick={() => { if(k === "⌫") setOtp(o => o.slice(0,-1)); else if(k && otp.length < 6) setOtp(o => o+k); }}
+              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map((k, i) => (
+                <button key={i} onClick={() => { if (k === "⌫") setOtp(o => o.slice(0, -1)); else if (k && otp.length < 6) setOtp(o => o + k); }}
                   className={`flex-1 h-12 rounded-xl text-[16px] font-semibold transition-colors ${k ? "bg-white border border-[#E8E8E8] text-[#111111] active:bg-[#F0EDE8]" : "invisible"}`}>
                   {k}
                 </button>
@@ -648,7 +700,7 @@ function HomeScreen({ ctx }: { ctx: AppCtx }) {
           <div className="relative z-10 p-5 flex flex-col justify-between h-full">
             <span className="text-[10px] font-bold text-white/60 uppercase tracking-wider">Limited Offer</span>
             <div>
-              <p className="text-[18px] font-bold text-white leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>₹200 off your<br/>first cleaning</p>
+              <p className="text-[18px] font-bold text-white leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>₹200 off your<br />first cleaning</p>
               <p className="text-[10px] text-white/50 mt-1">Use code FIRST200</p>
             </div>
           </div>
@@ -740,7 +792,7 @@ function SearchScreen({ ctx }: { ctx: AppCtx }) {
   const trending = SERVICES.slice(0, 3);
   const results = q.length > 0 ? SERVICES.filter(s => s.name.toLowerCase().includes(q.toLowerCase()) || s.provider.toLowerCase().includes(q.toLowerCase()) || s.categoryId.includes(q.toLowerCase())) : [];
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <div className="px-4 py-3 flex items-center gap-3">
         <button onClick={ctx.goBack} className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-[#E8E8E8] shadow-sm">
           <ArrowLeft size={18} strokeWidth={2} />
@@ -810,7 +862,7 @@ function NotificationsScreen({ ctx }: { ctx: AppCtx }) {
   useEffect(() => { ctx.markNotifsRead(); }, []);
   const iconMap = { booking: CheckCircle, offer: Gift, reminder: Bell, update: Navigation };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Notifications" onBack={ctx.goBack} />
       <div className="px-4">
         {ctx.notifications.map((n, i) => {
@@ -837,7 +889,7 @@ function NotificationsScreen({ ctx }: { ctx: AppCtx }) {
 // ─── CATEGORIES ───────────────────────────────────────────────────────────
 function CategoriesScreen({ ctx }: { ctx: AppCtx }) {
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] pb-4">
+    <div className="min-h-full bg-[#FAF8F4] pb-4">
       <div className="px-4 pt-3 pb-4">
         <h1 className="text-[24px] font-bold text-[#111111]" style={{ fontFamily: "'Outfit', sans-serif" }}>Explore</h1>
         <p className="text-[13px] text-[#888888]">All home services, right here</p>
@@ -867,7 +919,7 @@ function CategoriesScreen({ ctx }: { ctx: AppCtx }) {
 // ─── ALL CATEGORIES ───────────────────────────────────────────────────────
 function AllCategoriesScreen({ ctx }: { ctx: AppCtx }) {
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] pb-4">
+    <div className="min-h-full bg-[#FAF8F4] pb-4">
       <BackHeader title="All Categories" onBack={ctx.goBack} />
       <div className="px-4 grid grid-cols-3 gap-3">
         {CATEGORIES.map(cat => (
@@ -891,7 +943,7 @@ function CategoryDetailScreen({ ctx }: { ctx: AppCtx }) {
   const svcs = ctx.selectedCategoryId ? getSvcsByCategory(ctx.selectedCategoryId) : SERVICES;
   if (!cat) return null;
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <div className="relative h-[180px]">
         <img src={cat.image} alt={cat.name} className="w-full h-full object-cover bg-[#E8E4DC]" />
         <div className="absolute inset-0 bg-black/40" />
@@ -922,7 +974,7 @@ function ServiceListingScreen({ ctx }: { ctx: AppCtx }) {
   const [showSort, setShowSort] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="All Services" onBack={ctx.goBack} right={
         <button onClick={() => ctx.requireAuth(() => ctx.navigate("wishlist"))} className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-[#E8E8E8] shadow-sm">
           <Heart size={17} strokeWidth={1.8} className={ctx.wishlist.size > 0 ? "fill-red-500 text-red-500" : ""} />
@@ -984,7 +1036,7 @@ function FilterModal({ ctx, onClose }: { ctx: AppCtx; onClose: () => void }) {
         <div className="mb-5">
           <p className="text-[13px] font-semibold text-[#111111] mb-2">Minimum Rating</p>
           <div className="flex gap-2">
-            {[0,3,3.5,4,4.5].map(r => (
+            {[0, 3, 3.5, 4, 4.5].map(r => (
               <button key={r} onClick={() => setLocal(s => ({ ...s, rating: r }))} className={`px-3 py-1.5 rounded-full text-[12px] font-semibold border ${local.rating === r ? "bg-[#111111] text-white border-[#111111]" : "bg-white border-[#E8E8E8] text-[#555555]"}`}>
                 {r === 0 ? "Any" : `${r}★`}
               </button>
@@ -1028,7 +1080,7 @@ function ServiceDetailScreen({ ctx }: { ctx: AppCtx }) {
   };
   const pkg = svc.packages.find(p => p.id === activePkg);
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] pb-28">
+    <div className="min-h-full bg-[#FAF8F4] pb-28">
       {/* Image area */}
       <div className="relative h-[260px] bg-[#F0EDE8]">
         <button onClick={() => { ctx.setGalleryIdx(imgIdx); ctx.navigate("image-gallery"); }}>
@@ -1197,7 +1249,7 @@ function ImageGalleryScreen({ ctx }: { ctx: AppCtx }) {
   const [idx, setIdx] = useState(ctx.galleryIdx);
   if (!svc) return null;
   return (
-    <div className="min-h-[780px] bg-black flex flex-col">
+    <div className="min-h-full bg-black flex flex-col">
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <button onClick={ctx.goBack} className="w-9 h-9 flex items-center justify-center rounded-full bg-white/20">
           <ArrowLeft size={18} className="text-white" />
@@ -1226,7 +1278,7 @@ function PackagesScreen({ ctx }: { ctx: AppCtx }) {
   const svc = getSvc(ctx.selectedServiceId);
   if (!svc) return null;
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Choose Package" onBack={ctx.goBack} />
       <div className="px-4 flex flex-col gap-4 pb-32">
         {svc.packages.map(p => {
@@ -1266,7 +1318,7 @@ function PackagesScreen({ ctx }: { ctx: AppCtx }) {
 function FAQsScreen({ ctx }: { ctx: AppCtx }) {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="FAQs" onBack={ctx.goBack} />
       <div className="px-4 flex flex-col gap-2 pb-8">
         {FAQS_DATA.map((faq, i) => (
@@ -1292,7 +1344,7 @@ function FAQsScreen({ ctx }: { ctx: AppCtx }) {
 // ─── REVIEWS ────────────────────────────────────────────────────────────
 function ReviewsScreen({ ctx }: { ctx: AppCtx }) {
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Reviews" onBack={ctx.goBack} />
       <div className="px-4 mb-4">
         <div className="bg-white rounded-2xl p-5 border border-[#F0EDE8]">
@@ -1303,7 +1355,7 @@ function ReviewsScreen({ ctx }: { ctx: AppCtx }) {
               <p className="text-[11px] text-[#888888] mt-1">2,847 reviews</p>
             </div>
             <div className="flex-1">
-              {[5,4,3,2,1].map(r => (
+              {[5, 4, 3, 2, 1].map(r => (
                 <div key={r} className="flex items-center gap-2 mb-1">
                   <span className="text-[11px] text-[#888888] w-3">{r}</span>
                   <Star size={10} className="fill-amber-400 text-amber-400" />
@@ -1340,7 +1392,7 @@ function ReviewsScreen({ ctx }: { ctx: AppCtx }) {
 // ─── SIMILAR SERVICES ────────────────────────────────────────────────────
 function SimilarServicesScreen({ ctx }: { ctx: AppCtx }) {
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Similar Services" onBack={ctx.goBack} />
       <div className="px-4 flex flex-col gap-4 pb-8">
         {SERVICES.filter(s => s.id !== ctx.selectedServiceId).map(svc => (
@@ -1354,7 +1406,7 @@ function SimilarServicesScreen({ ctx }: { ctx: AppCtx }) {
 // ─── AI DIAGNOSIS ────────────────────────────────────────────────────────
 function AIDiagnosisScreen({ ctx }: { ctx: AppCtx }) {
   const [loading, setLoading] = useState(false);
-  const tabs: { id: "text"|"photo"|"video"; Icon: typeof Search; label: string }[] = [
+  const tabs: { id: "text" | "photo" | "video"; Icon: typeof Search; label: string }[] = [
     { id: "text", Icon: FileText, label: "Describe" },
     { id: "photo", Icon: Camera, label: "Photo" },
     { id: "video", Icon: Video, label: "Video" },
@@ -1364,7 +1416,7 @@ function AIDiagnosisScreen({ ctx }: { ctx: AppCtx }) {
     setTimeout(() => { setLoading(false); ctx.navigate("ai-results"); }, 2200);
   };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="AI Diagnosis" onBack={ctx.goBack} />
       <div className="px-4">
         <div className="bg-[#111111] rounded-2xl p-4 mb-5 flex items-center gap-3">
@@ -1445,7 +1497,7 @@ function AIDiagnosisScreen({ ctx }: { ctx: AppCtx }) {
 // ─── AI RESULTS ──────────────────────────────────────────────────────────
 function AIResultsScreen({ ctx }: { ctx: AppCtx }) {
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="AI Analysis" onBack={ctx.goBack} />
       <div className="px-4">
         <div className="bg-[#E8F5EE] rounded-2xl p-4 mb-5 flex items-center gap-3">
@@ -1499,7 +1551,7 @@ function CostEstimationScreen({ ctx }: { ctx: AppCtx }) {
   const gst = Math.round(pkg.price * 0.18);
   const total = labor + materials + platformFee + gst;
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Cost Estimate" onBack={ctx.goBack} />
       <div className="px-4">
         <div className="bg-white rounded-2xl border border-[#F0EDE8] overflow-hidden mb-4">
@@ -1537,7 +1589,7 @@ function CostEstimationScreen({ ctx }: { ctx: AppCtx }) {
 // ─── WORKER RECOMMENDATION ────────────────────────────────────────────────
 function WorkerRecommendationScreen({ ctx }: { ctx: AppCtx }) {
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Professionals" onBack={ctx.goBack} />
       <p className="text-[13px] text-[#888888] px-4 mb-4">Top verified professionals for this service</p>
       <div className="px-4 flex flex-col gap-3 pb-6">
@@ -1583,7 +1635,7 @@ function WorkerProfileScreen({ ctx }: { ctx: AppCtx }) {
   const w = getWorker(ctx.selectedWorkerId);
   if (!w) return null;
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] pb-32">
+    <div className="min-h-full bg-[#FAF8F4] pb-32">
       <div className="relative h-[220px] bg-[#F0EDE8]">
         <img src={w.image} alt={w.name} className="w-full h-full object-cover object-top" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#FAF8F4]" />
@@ -1664,7 +1716,7 @@ function WorkerProfileScreen({ ctx }: { ctx: AppCtx }) {
 function WishlistScreen({ ctx }: { ctx: AppCtx }) {
   const items = SERVICES.filter(s => ctx.wishlist.has(s.id));
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Wishlist" onBack={ctx.goBack} />
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center pt-20 px-8 text-center">
@@ -1696,7 +1748,7 @@ function CartScreen({ ctx }: { ctx: AppCtx }) {
   const discount = ctx.appliedCoupon?.discount || 0;
   const total = subtotal - discount;
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title={`Cart (${ctx.cart.length})`} onBack={ctx.goBack} />
       {ctx.cart.length === 0 ? (
         <div className="flex flex-col items-center justify-center pt-20 text-center px-8">
@@ -1772,7 +1824,7 @@ function CartScreen({ ctx }: { ctx: AppCtx }) {
 // ─── ADDRESS SELECTION ────────────────────────────────────────────────────
 function AddressScreen({ ctx }: { ctx: AppCtx }) {
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Select Address" onBack={ctx.goBack} />
       <div className="px-4">
         <div className="flex flex-col gap-3 mb-4">
@@ -1816,7 +1868,7 @@ function AddEditAddressScreen({ ctx }: { ctx: AppCtx }) {
     ctx.goBack();
   };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title={editing ? "Edit Address" : "Add Address"} onBack={ctx.goBack} />
       <div className="px-4">
         <div className="flex gap-2 mb-5">
@@ -1847,7 +1899,7 @@ function ScheduleScreen({ ctx }: { ctx: AppCtx }) {
     return { day, date, full, isToday: i === 0 };
   });
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Schedule Service" onBack={ctx.goBack} />
       <div className="px-4">
         <h2 className="text-[15px] font-bold text-[#111111] mb-3" style={{ fontFamily: "'Outfit', sans-serif" }}>Choose a date</h2>
@@ -1887,7 +1939,7 @@ function CheckoutScreen({ ctx }: { ctx: AppCtx }) {
   const platformFee = 49;
   const total = subtotal - discount + platformFee;
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] pb-32">
+    <div className="min-h-full bg-[#FAF8F4] pb-32">
       <BackHeader title="Checkout" onBack={ctx.goBack} />
       <div className="px-4 flex flex-col gap-4">
         {/* Services */}
@@ -1985,12 +2037,12 @@ function CheckoutScreen({ ctx }: { ctx: AppCtx }) {
 function CouponsScreen({ ctx }: { ctx: AppCtx }) {
   const [code, setCode] = useState("");
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Coupons & Offers" onBack={ctx.goBack} />
       <div className="px-4">
         <div className="flex gap-2 mb-5">
           <input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Enter promo code" className="flex-1 bg-white border border-[#E8E8E8] rounded-xl px-4 py-3.5 text-[14px] text-[#111111] outline-none uppercase tracking-widest" />
-          <button onClick={() => { const c = COUPONS.find(cp => cp.code === code && cp.valid); if(c) { ctx.setAppliedCoupon({ code: c.code, discount: c.type === "flat" ? c.discount : Math.min(c.discount * 10, (c as typeof c & {maxDiscount?: number}).maxDiscount || 9999) }); ctx.goBack(); } }} className="px-4 bg-[#111111] text-white rounded-xl text-[13px] font-bold">Apply</button>
+          <button onClick={() => { const c = COUPONS.find(cp => cp.code === code && cp.valid); if (c) { ctx.setAppliedCoupon({ code: c.code, discount: c.type === "flat" ? c.discount : Math.min(c.discount * 10, (c as typeof c & { maxDiscount?: number }).maxDiscount || 9999) }); ctx.goBack(); } }} className="px-4 bg-[#111111] text-white rounded-xl text-[13px] font-bold">Apply</button>
         </div>
         <h3 className="text-[13px] font-bold text-[#AAAAAA] uppercase tracking-wider mb-3">Available Offers</h3>
         <div className="flex flex-col gap-3">
@@ -2021,7 +2073,7 @@ function CouponsScreen({ ctx }: { ctx: AppCtx }) {
 function PaymentScreen({ ctx }: { ctx: AppCtx }) {
   const icons: Record<string, typeof CreditCard> = { upi: Zap, card: CreditCard, wallet: Package, netbanking: Shield };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Payment Method" onBack={ctx.goBack} />
       <div className="px-4">
         <div className="flex flex-col gap-3 mb-5">
@@ -2069,7 +2121,7 @@ function BookingSuccessScreen({ ctx }: { ctx: AppCtx }) {
     ctx.setCart([]);
   }, []);
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] flex flex-col items-center pt-12 pb-8 px-6">
+    <div className="min-h-full bg-[#FAF8F4] flex flex-col items-center pt-12 pb-8 px-6">
       <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", damping: 15 }} className="w-24 h-24 bg-[#111111] rounded-full flex items-center justify-center mb-6">
         <Check size={44} className="text-white" strokeWidth={2.5} />
       </motion.div>
@@ -2119,7 +2171,7 @@ function BookingSuccessScreen({ ctx }: { ctx: AppCtx }) {
 function LiveTrackingScreen({ ctx }: { ctx: AppCtx }) {
   const worker = WORKERS[0];
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Live Tracking" onBack={ctx.goBack} right={
         <button onClick={() => ctx.navigate("chat")} className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-[#E8E8E8] shadow-sm">
           <MessageCircle size={17} strokeWidth={1.8} />
@@ -2128,13 +2180,13 @@ function LiveTrackingScreen({ ctx }: { ctx: AppCtx }) {
       {/* Fake map */}
       <div className="mx-4 mb-4 h-[280px] bg-[#E8EFF0] rounded-2xl overflow-hidden relative">
         {/* Grid lines */}
-        {[20,40,60,80].map(p => <div key={p} className="absolute left-0 right-0 border-b border-[#D4DFE0]" style={{ top: `${p}%` }} />)}
-        {[20,40,60,80].map(p => <div key={p} className="absolute top-0 bottom-0 border-r border-[#D4DFE0]" style={{ left: `${p}%` }} />)}
+        {[20, 40, 60, 80].map(p => <div key={p} className="absolute left-0 right-0 border-b border-[#D4DFE0]" style={{ top: `${p}%` }} />)}
+        {[20, 40, 60, 80].map(p => <div key={p} className="absolute top-0 bottom-0 border-r border-[#D4DFE0]" style={{ left: `${p}%` }} />)}
         {/* Roads */}
         <div className="absolute top-[48%] left-0 right-0 h-7 bg-white/50" />
         <div className="absolute left-[38%] top-0 bottom-0 w-7 bg-white/50" />
         {/* Route dots */}
-        {[15,25,35].map(p => <div key={p} className="absolute w-2 h-2 bg-[#111111]/30 rounded-full" style={{ left: `${p}%`, top: "48%" }} />)}
+        {[15, 25, 35].map(p => <div key={p} className="absolute w-2 h-2 bg-[#111111]/30 rounded-full" style={{ left: `${p}%`, top: "48%" }} />)}
         {/* Worker marker (animated) */}
         <motion.div animate={{ left: ["10%", "35%"] }} transition={{ duration: 8, ease: "linear", repeat: Infinity, repeatType: "reverse" }} className="absolute top-[40%]" style={{ left: "10%" }}>
           <div className="w-10 h-10 bg-[#111111] rounded-full flex items-center justify-center shadow-xl">
@@ -2215,7 +2267,7 @@ function ChatScreen({ ctx }: { ctx: AppCtx }) {
     }, 1200);
   };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] flex flex-col">
+    <div className="min-h-full bg-[#FAF8F4] flex flex-col">
       <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-[#E8E8E8]">
         <button onClick={ctx.goBack} className="w-9 h-9 flex items-center justify-center rounded-full bg-[#F5F3EF]"><ArrowLeft size={18} strokeWidth={2} /></button>
         <img src={worker.image} alt="" className="w-10 h-10 rounded-full object-cover bg-[#F0EDE8]" />
@@ -2260,7 +2312,7 @@ function BookingDetailScreen({ ctx }: { ctx: AppCtx }) {
   const worker = getWorker(bk.workerId) || WORKERS[0];
   const statusColors: Record<string, string> = { upcoming: "text-blue-700 bg-blue-50", ongoing: "text-amber-700 bg-amber-50", completed: "text-green-700 bg-green-50", cancelled: "text-red-700 bg-red-50" };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Booking Details" onBack={ctx.goBack} />
       <div className="px-4">
         {/* Status */}
@@ -2331,16 +2383,16 @@ function BookingDetailScreen({ ctx }: { ctx: AppCtx }) {
 
 // ─── BOOKING HISTORY ─────────────────────────────────────────────────────
 function BookingHistoryScreen({ ctx }: { ctx: AppCtx }) {
-  const [tab, setTab] = useState<"upcoming"|"completed">("upcoming");
-  const filtered = ctx.bookings.filter(b => tab === "upcoming" ? ["upcoming","ongoing"].includes(b.status) : ["completed","cancelled"].includes(b.status));
+  const [tab, setTab] = useState<"upcoming" | "completed">("upcoming");
+  const filtered = ctx.bookings.filter(b => tab === "upcoming" ? ["upcoming", "ongoing"].includes(b.status) : ["completed", "cancelled"].includes(b.status));
   const statusColors: Record<string, string> = { upcoming: "text-blue-700 bg-blue-50", ongoing: "text-amber-700 bg-amber-50", completed: "text-green-700 bg-green-50", cancelled: "text-red-700 bg-red-50" };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] pb-4">
+    <div className="min-h-full bg-[#FAF8F4] pb-4">
       <div className="px-4 pt-3 pb-4">
         <h1 className="text-[24px] font-bold text-[#111111]" style={{ fontFamily: "'Outfit', sans-serif" }}>Bookings</h1>
       </div>
       <div className="flex gap-1 mx-4 bg-white rounded-2xl p-1 border border-[#F0EDE8] mb-4">
-        {(["upcoming","completed"] as const).map(t => (
+        {(["upcoming", "completed"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-all capitalize ${tab === t ? "bg-[#111111] text-white" : "text-[#888888]"}`}>{t}</button>
         ))}
       </div>
@@ -2384,22 +2436,28 @@ function BookingHistoryScreen({ ctx }: { ctx: AppCtx }) {
 // ─── PROFILE ─────────────────────────────────────────────────────────────
 function ProfileScreen({ ctx }: { ctx: AppCtx }) {
   const menuSections = [
-    { items: [
-      { Icon: Heart, label: "Wishlist", to: "wishlist", count: ctx.wishlist.size },
-      { Icon: CalendarDays, label: "My Bookings", to: "booking-history", count: ctx.bookings.filter(b => b.status === "upcoming").length },
-    ]},
-    { items: [
-      { Icon: MapPin, label: "Saved Addresses", to: "saved-addresses" },
-      { Icon: CreditCard, label: "Payment Methods", to: "payment-methods" },
-      { Icon: Sparkles, label: "AI Reminders", to: "ai-reminder" },
-    ]},
-    { items: [
-      { Icon: Settings, label: "Settings", to: "settings" },
-      { Icon: HelpCircle, label: "Help & Support", to: "help-support" },
-    ]},
+    {
+      items: [
+        { Icon: Heart, label: "Wishlist", to: "wishlist", count: ctx.wishlist.size },
+        { Icon: CalendarDays, label: "My Bookings", to: "booking-history", count: ctx.bookings.filter(b => b.status === "upcoming").length },
+      ]
+    },
+    {
+      items: [
+        { Icon: MapPin, label: "Saved Addresses", to: "saved-addresses" },
+        { Icon: CreditCard, label: "Payment Methods", to: "payment-methods" },
+        { Icon: Sparkles, label: "AI Reminders", to: "ai-reminder" },
+      ]
+    },
+    {
+      items: [
+        { Icon: Settings, label: "Settings", to: "settings" },
+        { Icon: HelpCircle, label: "Help & Support", to: "help-support" },
+      ]
+    },
   ];
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4] pb-6">
+    <div className="min-h-full bg-[#FAF8F4] pb-6">
       <div className="px-4 pt-4 pb-5">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-[#111111] rounded-2xl flex items-center justify-center">
@@ -2460,7 +2518,7 @@ function ProfileScreen({ ctx }: { ctx: AppCtx }) {
 function EditProfileScreen({ ctx }: { ctx: AppCtx }) {
   const [form, setForm] = useState({ ...ctx.profile });
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Edit Profile" onBack={ctx.goBack} />
       <div className="px-4">
         <div className="flex justify-center mb-6">
@@ -2492,7 +2550,7 @@ function EditProfileScreen({ ctx }: { ctx: AppCtx }) {
 // ─── SAVED ADDRESSES ─────────────────────────────────────────────────────
 function SavedAddressesScreen({ ctx }: { ctx: AppCtx }) {
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Saved Addresses" onBack={ctx.goBack} />
       <div className="px-4 flex flex-col gap-3">
         {ctx.addresses.map(addr => (
@@ -2525,7 +2583,7 @@ function SavedAddressesScreen({ ctx }: { ctx: AppCtx }) {
 function PaymentMethodsScreen({ ctx }: { ctx: AppCtx }) {
   const icons: Record<string, typeof CreditCard> = { upi: Zap, card: CreditCard, wallet: Package, netbanking: Shield };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Payment Methods" onBack={ctx.goBack} />
       <div className="px-4 flex flex-col gap-3">
         {ctx.payMethods.map(pm => {
@@ -2561,7 +2619,7 @@ function SettingsScreen({ ctx }: { ctx: AppCtx }) {
   const [dark, setDark] = useState(false);
   const [lang, setLang] = useState("English");
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Settings" onBack={ctx.goBack} />
       <div className="px-4 flex flex-col gap-3">
         {[
@@ -2601,7 +2659,7 @@ function SettingsScreen({ ctx }: { ctx: AppCtx }) {
 function HelpSupportScreen({ ctx }: { ctx: AppCtx }) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="Help & Support" onBack={ctx.goBack} />
       <div className="px-4">
         {/* Quick actions */}
@@ -2648,7 +2706,7 @@ function AIReminderScreen({ ctx }: { ctx: AppCtx }) {
   const statusColor = { "overdue": "text-red-600 bg-red-50", "due-soon": "text-amber-600 bg-amber-50", "ok": "text-green-600 bg-green-50" };
   const statusLabel = { "overdue": "Overdue", "due-soon": "Due Soon", "ok": "Up to Date" };
   return (
-    <div className="min-h-[780px] bg-[#FAF8F4]">
+    <div className="min-h-full bg-[#FAF8F4]">
       <BackHeader title="AI Maintenance Reminders" onBack={ctx.goBack} />
       <div className="px-4">
         <div className="bg-[#111111] rounded-2xl p-4 mb-5 flex items-start gap-3">
@@ -2695,6 +2753,28 @@ function AIReminderScreen({ ctx }: { ctx: AppCtx }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────
 export default function App() {
+  const [dimensions, setDimensions] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 390,
+    height: typeof window !== "undefined" ? window.innerHeight : 844,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = dimensions.width < 480;
+  const padding = 32;
+  const scaleH = (dimensions.height - padding) / 844;
+  const scaleW = (dimensions.width - padding) / 390;
+  const scale = isMobile ? 1 : Math.min(1, scaleH, scaleW);
+
   const [currentScreen, setCurrentScreen] = useState("splash");
   const [history, setHistory] = useState<string[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -2713,7 +2793,7 @@ export default function App() {
   const [addresses, setAddresses] = useState<Address[]>(INIT_ADDRESSES);
   const [payMethods, setPayMethods] = useState<PayMethod[]>(INIT_PAYMETHODS);
   const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>(INIT_CHAT);
-  const [aiTab, setAiTab] = useState<"text"|"photo"|"video">("text");
+  const [aiTab, setAiTab] = useState<"text" | "photo" | "video">("text");
   const [aiQuery, setAiQuery] = useState("");
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [sortOption, setSortOption] = useState("popular");
@@ -2778,6 +2858,7 @@ export default function App() {
     editingAddressId, setEditingAddressId,
     notifications, markNotifsRead,
     requireAuth,
+    isMobile,
   };
 
   const showBottomNav = ["home", "categories", "booking-history", "profile"].includes(currentScreen);
@@ -2833,25 +2914,54 @@ export default function App() {
   const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")}`;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#D9D4CB" }}>
+    <div className={isMobile ? "w-full h-screen overflow-hidden" : "min-h-screen flex items-center justify-center p-4"} style={{ background: isMobile ? (isDark ? "#111111" : "#FAF8F4") : "#D9D4CB" }}>
       {/* Phone frame */}
-      <div className="relative flex-shrink-0" style={{ width: 390, height: 844, borderRadius: 48, overflow: "hidden", boxShadow: "0 60px 120px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.15)" }}>
+      <div className="relative flex-shrink-0" style={
+        isMobile
+          ? {
+            width: "100%",
+            height: "100%",
+            borderRadius: 0,
+            overflow: "hidden",
+            boxShadow: "none"
+          }
+          : {
+            width: 390,
+            height: 844,
+            borderRadius: 48,
+            overflow: "hidden",
+            boxShadow: "0 60px 120px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.15)",
+            transform: `scale(${scale})`,
+            transformOrigin: "center center"
+          }
+      }>
         {/* Dynamic Island */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none" style={{ top: 14, width: 126, height: 34, background: "#000", borderRadius: 20 }} />
+        {!isMobile && (
+          <div className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none" style={{ top: 14, width: 126, height: 34, background: "#000", borderRadius: 20 }} />
+        )}
 
         {/* Status bar */}
-        <div className={`absolute top-0 left-0 right-0 z-40 flex items-center justify-between pointer-events-none`} style={{ height: 56, paddingLeft: 24, paddingRight: 24, paddingTop: 16 }}>
-          <span className={`text-[13px] font-semibold ${isDark ? "text-white" : "text-[#111111]"}`}>{timeStr}</span>
-          <div className={`flex items-center gap-[5px] ${isDark ? "text-white" : "text-[#111111]"}`}>
-            <Signal size={13} />
-            <Wifi size={13} />
-            <Battery size={15} />
+        {!isMobile && (
+          <div className={`absolute top-0 left-0 right-0 z-40 flex items-center justify-between pointer-events-none`} style={{ height: 56, paddingLeft: 24, paddingRight: 24, paddingTop: 16, background: isDark ? "#111111" : "#FAF8F4" }}>
+            <span className={`text-[13px] font-semibold ${isDark ? "text-white" : "text-[#111111]"}`}>{timeStr}</span>
+            <div className={`flex items-center gap-[5px] ${isDark ? "text-white" : "text-[#111111]"}`}>
+              <Signal size={13} />
+              <Wifi size={13} />
+              <Battery size={15} />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className="absolute inset-0 overflow-y-auto" style={{ scrollbarWidth: "none", paddingTop: 56, paddingBottom: showBottomNav ? 83 : 0, background: isDark ? "#111111" : "#FAF8F4" }}>
-          <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, ease: "easeOut" }}>
+        <div ref={scrollRef} className="absolute inset-0 overflow-y-auto" style={{
+          scrollbarWidth: "none",
+          paddingTop: isMobile ? "env(safe-area-inset-top, 0px)" : 56,
+          paddingBottom: isMobile
+            ? (showBottomNav ? "calc(64px + env(safe-area-inset-bottom, 0px))" : "env(safe-area-inset-bottom, 0px)")
+            : (showBottomNav ? 83 : 0),
+          background: isDark ? "#111111" : "#FAF8F4"
+        }}>
+          <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, ease: "easeOut" }} className="min-h-full flex flex-col">
             <CurrentScreen ctx={ctx} />
           </motion.div>
         </div>
@@ -2859,14 +2969,9 @@ export default function App() {
         {/* Bottom navigation */}
         {showBottomNav && (
           <div className="absolute bottom-0 left-0 right-0 z-40">
-            <BottomNav screen={currentScreen} navigate={navigate} requireAuth={requireAuth} />
+            <BottomNav screen={currentScreen} navigate={navigate} requireAuth={requireAuth} isMobile={isMobile} />
           </div>
         )}
-      </div>
-
-      {/* Screen label (desktop hint) */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm text-white/70 text-[11px] font-medium px-3 py-1.5 rounded-full">
-        {currentScreen}
       </div>
     </div>
   );
