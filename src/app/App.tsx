@@ -339,7 +339,7 @@ function Pill({ children, active, onClick }: { children: React.ReactNode; active
 function SvcCard({ svc, onPress, onWish, inWish }: { svc: Service; onPress: () => void; onWish?: () => void; inWish?: boolean }) {
   return (
     <button onClick={onPress} className="w-full text-left">
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#F0EDE8]">
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#F0EDE8] transition-shadow duration-300 hover:shadow-lg">
         <div className="relative">
           <img src={svc.images[0]} alt={svc.name} className="w-full h-[148px] object-cover bg-[#F0EDE8]" />
           {svc.badge && <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-white rounded-full text-[10px] font-bold text-[#111111] shadow-sm">{svc.badge}</span>}
@@ -373,7 +373,7 @@ function SvcCard({ svc, onPress, onWish, inWish }: { svc: Service; onPress: () =
 function SvcCardH({ svc, onPress }: { svc: Service; onPress: () => void }) {
   return (
     <button onClick={onPress} className="text-left w-[180px] flex-shrink-0">
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#F0EDE8]">
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#F0EDE8] transition-shadow duration-300 hover:shadow-lg">
         <img src={svc.images[0]} alt={svc.name} className="w-full h-[110px] object-cover bg-[#F0EDE8]" />
         <div className="p-2.5">
           <p className="text-[12px] font-semibold text-[#111111] leading-tight truncate">{svc.name}</p>
@@ -448,9 +448,10 @@ function BottomNav({ screen, navigate, requireAuth, isMobile }: { screen: string
       <div className="flex items-center justify-around px-2 pt-2.5 pb-1">
         {tabs.map(({ id, Icon, label, to, auth }) => (
           <button key={id} onClick={() => auth ? requireAuth(() => navigate(to)) : navigate(to)}
-            className="flex flex-col items-center gap-0.5 px-4">
+            className="flex flex-col items-center gap-0.5 px-4 relative">
             <Icon size={22} className={active === id ? "text-[#111111]" : "text-[#888888]"} strokeWidth={active === id ? 2.2 : 1.8} />
             <span className={`text-[10px] font-semibold ${active === id ? "text-[#111111]" : "text-[#888888]"}`}>{label}</span>
+            {active === id && <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-[#111111]" />}
           </button>
         ))}
       </div>
@@ -2961,7 +2962,7 @@ export default function App() {
             : (showBottomNav ? 83 : 0),
           background: isDark ? "#111111" : "#FAF8F4"
         }}>
-          <motion.div key={currentScreen} initial={{ opacity: 0, x: 12, scale: 0.98 }} animate={{ opacity: 1, x: 0, scale: 1 }} transition={{ type: "spring", stiffness: 320, damping: 26 }} className="min-h-full flex flex-col overflow-x-hidden">
+          <motion.div key={currentScreen} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="min-h-full flex flex-col">
             <CurrentScreen ctx={ctx} />
           </motion.div>
         </div>

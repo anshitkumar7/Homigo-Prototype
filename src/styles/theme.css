@@ -140,6 +140,9 @@
 
   html {
     font-size: var(--font-size);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1 {
@@ -176,20 +179,29 @@
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, opacity 0.2s ease;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, opacity 0.2s ease;
   }
 
   button:hover:not(:disabled) {
-    transform: scale(1.04);
+    transform: scale(1.03);
   }
 
   button:active:not(:disabled) {
-    transform: scale(0.96);
+    transform: scale(0.97);
   }
 
   input {
     font-size: var(--text-base);
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
+  }
+
+  img {
+    transition: transform 0.4s ease;
+  }
+
+  a {
+    transition: opacity 0.2s ease;
   }
 }
