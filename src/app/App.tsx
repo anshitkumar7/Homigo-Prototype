@@ -467,73 +467,146 @@ function BottomNav({ screen, navigate, requireAuth, isMobile }: { screen: string
 // ─── SPLASH ──────────────────────────────────────────────────────────────
 function SplashScreen({ ctx }: { ctx: AppCtx }) {
   useEffect(() => {
-    const t = setTimeout(() => ctx.navigate("home"), 2500);
+    const t = setTimeout(() => ctx.navigate("home"), 3000);
     return () => clearTimeout(t);
   }, []);
+
+  const brandLetters = "homigo".split("");
+
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111]">
-      <div className="flex flex-col items-center gap-7 relative">
-        {/* Ripple Wave Effect */}
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0A] overflow-hidden">
+
+      {/* Ambient background glow */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.5, delay: 0.2 }}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse 50% 40% at 50% 45%, rgba(255,255,255,0.04) 0%, transparent 100%)"
+        }}
+      />
+
+      {/* Subtle particle dots floating */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{
+            opacity: [0, 0.3, 0],
+            y: [-20, -60],
+            x: [0, (i % 2 === 0 ? 10 : -10)]
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            delay: i * 0.4,
+            ease: "easeOut"
+          }}
+          className="absolute w-[2px] h-[2px] bg-white rounded-full"
+          style={{
+            left: `${25 + i * 10}%`,
+            top: `${45 + (i % 3) * 5}%`
+          }}
+        />
+      ))}
+
+      <div className="flex flex-col items-center gap-8 relative z-10">
+
+        {/* Logo container with glow ring + shimmer */}
         <div className="relative flex items-center justify-center">
+
+          {/* Soft breathing glow behind logo */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1.7, opacity: [0, 0.4, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
-            className="absolute w-[88px] h-[88px] rounded-[28px] border border-white/20 pointer-events-none"
-          />
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 2.3, opacity: [0, 0.2, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut", delay: 0.6 }}
-            className="absolute w-[88px] h-[88px] rounded-[28px] border border-white/10 pointer-events-none"
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: [0, 0.5, 0.3, 0.5], scale: [0.6, 1.2, 1.1, 1.2] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute w-[120px] h-[120px] rounded-[36px] pointer-events-none"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)" }}
           />
 
-          {/* Animated White logo box */}
-          <motion.div 
-            initial={{ scale: 0, opacity: 0, rotate: -25 }}
-            animate={{ scale: [0, 1.15, 1], opacity: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 110, damping: 14, delay: 0.1 }}
-            className="relative z-10 w-[88px] h-[88px] bg-white rounded-[28px] flex items-center justify-center shadow-[0_20px_50px_rgba(255,255,255,0.06)]"
+          {/* Outer ring pulse */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: [1, 1.5], opacity: [0.3, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+            className="absolute w-[92px] h-[92px] rounded-[30px] border border-white/15 pointer-events-none"
+          />
+
+          {/* White logo card */}
+          <motion.div
+            initial={{ scale: 0, opacity: 0, rotateY: -90 }}
+            animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+            transition={{ type: "spring", stiffness: 100, damping: 16, delay: 0.15 }}
+            className="relative z-10 w-[92px] h-[92px] bg-white rounded-[30px] flex items-center justify-center overflow-hidden"
+            style={{ boxShadow: "0 24px 60px rgba(255,255,255,0.07), 0 0 0 1px rgba(255,255,255,0.05)" }}
           >
+            {/* Shimmer sweep across the card */}
             <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 140, damping: 10, delay: 0.45 }}
+              initial={{ x: -100 }}
+              animate={{ x: 150 }}
+              transition={{ duration: 1.2, delay: 0.8, ease: "easeInOut" }}
+              className="absolute inset-y-0 w-[60px] pointer-events-none"
+              style={{
+                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)"
+              }}
+            />
+            {/* Home icon */}
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.2, 1], opacity: 1 }}
+              transition={{ type: "spring", stiffness: 150, damping: 12, delay: 0.5 }}
             >
-              <Home size={40} className="text-[#111111]" strokeWidth={1.5} />
+              <Home size={42} className="text-[#111111]" strokeWidth={1.4} />
             </motion.div>
           </motion.div>
         </div>
 
-        {/* Animated Title & Tagline */}
-        <motion.div 
-          initial={{ y: 24, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 70, damping: 14, delay: 0.5 }}
-          className="text-center"
-        >
-          <h1 className="text-[38px] font-bold text-white tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>homigo</h1>
-          <motion.p 
-            initial={{ opacity: 0, letterSpacing: "0.1em" }}
-            animate={{ opacity: 1, letterSpacing: "0.2em" }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-[13px] text-white/40 mt-1 uppercase"
+        {/* Brand name — staggered letter reveal */}
+        <div className="text-center">
+          <div className="flex justify-center">
+            {brandLetters.map((letter, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 120,
+                  damping: 14,
+                  delay: 0.6 + i * 0.07
+                }}
+                className="text-[40px] font-bold text-white tracking-tight"
+                style={{ fontFamily: "'Outfit', sans-serif" }}
+              >
+                {letter}
+              </motion.span>
+            ))}
+          </div>
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 0.4, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.2, ease: "easeOut" }}
+            className="text-[12px] text-white mt-1.5 tracking-[0.25em] uppercase"
           >
             Home Services
           </motion.p>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Loading indicator bouncing dots */}
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        transition={{ delay: 1.2, duration: 0.4 }} 
-        className="absolute bottom-16 flex gap-2"
+      {/* Sleek progress bar at bottom */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.4, duration: 0.3 }}
+        className="absolute bottom-14 w-[60px] h-[3px] bg-white/10 rounded-full overflow-hidden"
       >
-        {[0, 1, 2].map(i => (
-          <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
-        ))}
+        <motion.div
+          initial={{ x: "-100%" }}
+          animate={{ x: "100%" }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+          className="w-full h-full bg-white/40 rounded-full"
+        />
       </motion.div>
     </div>
   );
