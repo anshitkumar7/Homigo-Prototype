@@ -317,6 +317,28 @@ const getWorker = (id: string | null) => WORKERS.find(w => w.id === id);
 const getCat = (id: string | null) => CATEGORIES.find(c => c.id === id);
 const getSvcsByCategory = (cid: string) => SERVICES.filter(s => s.categoryId === cid);
 
+// Map worker specialty to the most relevant service
+const WORKER_SERVICE_MAP: Record<string, string> = {
+  w1: "s1", // Rahul Sharma → Cleaning Expert → Full Home Deep Cleaning
+  w2: "s3", // Priya Patel → AC Technician → AC Service & Repair
+  w3: "s5", // Amit Kumar → Master Electrician → Electrical Work & Wiring
+  w4: "s4", // Sunita Verma → Plumbing Expert → Plumbing Repair & Fix
+  w5: "s6", // Ravi Gupta → Painting Specialist → Interior Wall Painting
+};
+const getWorkerService = (workerId: string | null): Service | undefined => {
+  if (!workerId) return undefined;
+  const mappedServiceId = WORKER_SERVICE_MAP[workerId];
+  if (mappedServiceId) return getSvc(mappedServiceId);
+  // Fallback: try to match worker specialty to a service category
+  const worker = getWorker(workerId);
+  if (!worker) return undefined;
+  const specialtyLower = worker.specialty.toLowerCase();
+  return SERVICES.find(s => {
+    const cat = getCat(s.categoryId);
+    return cat && (specialtyLower.includes(cat.name.toLowerCase()) || cat.name.toLowerCase().includes(specialtyLower.split(" ")[0]));
+  }) || SERVICES[0];
+};
+
 // ─── Shared Components ───────────────────────────────────────────────────
 function StarRow({ rating, size = 12 }: { rating: number; size?: number }) {
   return (
@@ -1778,7 +1800,7 @@ function WorkerProfileScreen({ ctx }: { ctx: AppCtx }) {
             <button onClick={() => ctx.requireAuth(() => ctx.navigate("chat"))} className="w-12 h-12 border border-[#E8E8E8] rounded-xl flex items-center justify-center flex-shrink-0">
               <MessageCircle size={20} className="text-[#555555]" />
             </button>
-            <button onClick={() => ctx.requireAuth(() => { ctx.setSelectedPkgId(null); ctx.navigate("packages"); })} className="flex-1 bg-[#111111] text-white rounded-xl py-3.5 text-[15px] font-semibold">Book {w.name}</button>
+            <button onClick={() => ctx.requireAuth(() => { const svc = getWorkerService(w.id); if (svc) { ctx.setSelectedServiceId(svc.id); ctx.setSelectedPkgId(null); ctx.navigate("packages"); } })} className="flex-1 bg-[#111111] text-white rounded-xl py-3.5 text-[15px] font-semibold">Book {w.name}</button>
           </div>
         </div>
       </div>
