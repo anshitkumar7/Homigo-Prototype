@@ -775,6 +775,9 @@ function LoginScreen({ ctx }: { ctx: AppCtx }) {
           </>
         )}
         <p className="text-[11px] text-[#AAAAAA] text-center mt-8 leading-relaxed">By continuing, you agree to our Terms of Service and Privacy Policy</p>
+        <button onClick={() => ctx.navigate("home")} className="w-full mt-4 text-center text-[14px] font-medium text-[#555555] py-3 rounded-2xl hover:bg-[#F0EDE8] transition-colors">
+          Browse without signing in <ArrowRight size={14} className="inline ml-1" />
+        </button>
       </div>
     </div>
   );
