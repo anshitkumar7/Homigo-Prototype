@@ -486,10 +486,29 @@ function BottomNav({ screen, navigate, requireAuth, isMobile }: { screen: string
   );
 }
 
+// ─── AUTH PERSISTENCE KEYS ───────────────────────────────────────────────
+const AUTH_STORAGE_KEY = "homigo_is_logged_in";
+const ONBOARDING_SEEN_KEY = "homigo_onboarding_seen";
+
 // ─── SPLASH ──────────────────────────────────────────────────────────────
 function SplashScreen({ ctx }: { ctx: AppCtx }) {
   useEffect(() => {
-    const t = setTimeout(() => ctx.navigate("home"), 3000);
+    // Determine where to navigate after splash based on auth state
+    const isReturningUser = ctx.isLoggedIn;
+    const hasSeenOnboarding = localStorage.getItem(ONBOARDING_SEEN_KEY) === "true";
+
+    const t = setTimeout(() => {
+      if (isReturningUser) {
+        // Logged-in user → skip everything, go straight to home
+        ctx.navigate("home");
+      } else if (hasSeenOnboarding) {
+        // Seen onboarding before but not logged in → go to login
+        ctx.navigate("login");
+      } else {
+        // Brand new user → show onboarding
+        ctx.navigate("onboarding");
+      }
+    }, 3000);
     return () => clearTimeout(t);
   }, []);
 
@@ -644,12 +663,19 @@ const OB_STEPS = [
 function OnboardingScreen({ ctx }: { ctx: AppCtx }) {
   const [step, setStep] = useState(0);
   const s = OB_STEPS[step];
+
+  // Mark onboarding as seen when user navigates away
+  const completeOnboarding = (destination: string) => {
+    localStorage.setItem(ONBOARDING_SEEN_KEY, "true");
+    ctx.navigate(destination);
+  };
+
   return (
     <div className="flex flex-col min-h-full bg-[#FAF8F4]">
       <div className="relative h-[370px] overflow-hidden">
         <motion.img key={step} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} src={s.image} alt="" className="w-full h-full object-cover bg-[#E8E4DC]" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 60%, #FAF8F4 100%)" }} />
-        <button onClick={() => ctx.navigate("home")} className="absolute top-4 right-4 px-4 py-1.5 bg-white/85 backdrop-blur-sm rounded-full text-[12px] font-semibold text-[#111111]">Skip</button>
+        <button onClick={() => completeOnboarding("home")} className="absolute top-4 right-4 px-4 py-1.5 bg-white/85 backdrop-blur-sm rounded-full text-[12px] font-semibold text-[#111111]">Skip</button>
       </div>
       <div className="flex-1 flex flex-col px-6 pt-2 pb-8">
         <motion.div key={step} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex-1">
@@ -665,8 +691,8 @@ function OnboardingScreen({ ctx }: { ctx: AppCtx }) {
           <button onClick={() => setStep(s => s + 1)} className="w-full bg-[#111111] text-white py-4 rounded-2xl text-[15px] font-semibold">Continue</button>
         ) : (
           <div className="flex gap-3">
-            <button onClick={() => ctx.navigate("login")} className="flex-1 bg-[#111111] text-white py-4 rounded-2xl text-[15px] font-semibold">Get Started</button>
-            <button onClick={() => ctx.navigate("home")} className="flex-1 border-2 border-[#E8E8E8] text-[#111111] py-4 rounded-2xl text-[15px] font-semibold">Browse first</button>
+            <button onClick={() => completeOnboarding("login")} className="flex-1 bg-[#111111] text-white py-4 rounded-2xl text-[15px] font-semibold">Get Started</button>
+            <button onClick={() => completeOnboarding("home")} className="flex-1 border-2 border-[#E8E8E8] text-[#111111] py-4 rounded-2xl text-[15px] font-semibold">Browse first</button>
           </div>
         )}
       </div>
@@ -683,6 +709,8 @@ function LoginScreen({ ctx }: { ctx: AppCtx }) {
   const doLogin = () => {
     setLoading(true);
     setTimeout(() => {
+      localStorage.setItem(AUTH_STORAGE_KEY, "true");
+      localStorage.setItem(ONBOARDING_SEEN_KEY, "true");
       ctx.setIsLoggedIn(true);
       ctx.navigate("home");
     }, 1200);
@@ -2599,7 +2627,7 @@ function ProfileScreen({ ctx }: { ctx: AppCtx }) {
             ))}
           </div>
         ))}
-        <button onClick={() => { ctx.setIsLoggedIn(false); ctx.navigate("onboarding"); }} className="bg-white rounded-2xl border border-[#F0EDE8] px-4 py-3.5 flex items-center gap-3">
+        <button onClick={() => { localStorage.removeItem(AUTH_STORAGE_KEY); ctx.setIsLoggedIn(false); ctx.navigate("onboarding"); }} className="bg-white rounded-2xl border border-[#F0EDE8] px-4 py-3.5 flex items-center gap-3">
           <div className="w-8 h-8 bg-[#FFF0F0] rounded-lg flex items-center justify-center">
             <LogOut size={16} className="text-[#D94040]" strokeWidth={1.5} />
           </div>
@@ -2873,7 +2901,9 @@ export default function App() {
 
   const [currentScreen, setCurrentScreen] = useState("splash");
   const [history, setHistory] = useState<string[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem(AUTH_STORAGE_KEY) === "true";
+  });
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
